@@ -4,20 +4,20 @@ A small tool receiving [TZSP](https://en.wikipedia.org/wiki/TZSP) encapsulated d
 ## build
 On linux simply do:
 ```
-gcc -o tzsptun -Wall tzsptun.c
+gcc -o tzsptap -Wall tzsptap.c
 ```
 
 On FreeBSD do:
 ```
-cc -o tzsptun -Wall tzsptun.c
+cc -o tzsptap -Wall tzsptap.c
 ```
 
 ## run
 To run the tool check the usage:
 ```
-# ./tzsptun 
+# ./tzsptap 
 No listen address given.
-Usage: ./tzsptun [-v] -l address [-p port]
+Usage: ./tzsptap [-v] -l address [-p port]
 
 -v              : Be verbose
 -l address      : the IP address to listen on
