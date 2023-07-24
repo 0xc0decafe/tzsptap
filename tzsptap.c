@@ -334,10 +334,11 @@ int main(int argc, char *argv[]) {
         len = recvfrom(sock_fd, recvbuf, sizeof(recvbuf), 0, &sa_from, &from_len);
         if (verbose) {
             if (getnameinfo(&sa_from, from_len, hostbuf, sizeof(hostbuf), servbuf, sizeof(servbuf), NI_NUMERICHOST|NI_NUMERICSERV)) {
-                fprintf(stderr, "Can't resolve sockaddr: %s\n", strerror(errno));
-                return -1;
+                fprintf(stderr, "Can't resolve sockaddr: %s\n", strerror(errno));\
+                printf("Received %zu bytes\n", len);
+            } else {
+                printf("Received %zu bytes from %s:%s\n", len, hostbuf, servbuf);
             }
-            printf("Received %zu bytes from %s:%s\n", len, hostbuf, servbuf);
         }
 
         if (parse_tzsppkg(recvbuf, len, &pkg) < 0) {
