@@ -357,7 +357,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Couldn't parse TZSP package\n");
             continue;
         }
-        if (pkg.datalen > 0 && pkg.hdr->enc == TZSP_ENC_ETH) {
+        if (pkg.datalen > 0) {
             write(tun_fd, pkg.data, pkg.datalen);
         }
     }
