@@ -62,6 +62,8 @@
 #define TZSP_FLAG_NOFIELDS  0x01
 #define TZSP_FLAG_NODATA    0x02
 
+#define TZSP_ENC_ETH        0x01
+
 #define TZSP_HDR_PAD        0x00
 #define TZSP_HDR_END        0x01
 
@@ -106,7 +108,7 @@ void shut() {
         return;
     }
     err = ioctl(fd, SIOCIFDESTROY, (void *) &ifr);
-    if( err < 0 ) {
+    if (err < 0) {
          close(fd);
          fprintf(stderr, "Can't destroy tunnel device: %s\n", strerror(errno));
          return;
@@ -163,7 +165,7 @@ int tun_alloc(char *tun_device) {
     int err;
     struct ifreq ifr;
 
-    if( (fd = open("/dev/net/tun", O_RDWR)) < 0 )
+    if ((fd = open("/dev/net/tun", O_RDWR)) < 0)
         return -1;
 
     memset(&ifr, 0, sizeof(ifr));
@@ -171,7 +173,7 @@ int tun_alloc(char *tun_device) {
     dev = "tap%d";
     strncpy(ifr.ifr_name, dev, IFNAMSIZ);
     err = ioctl(fd, TUNSETIFF, (void *) &ifr);
-    if( err < 0 ) {
+    if (err < 0) {
          close(fd);
          return err;
     }
@@ -179,13 +181,13 @@ int tun_alloc(char *tun_device) {
 
 #elif defined(__FreeBSD__)
     char tunname[128];
-    for(int i = 0; i < MAX_TUN_NR; i++ ) {        
+    for (int i = 0; i < MAX_TUN_NR; i++) {        
         sprintf(tunname, "/dev/tap%d", i);
-        if( (fd = open(tunname, O_RDWR)) != -1 ) {
+        if ((fd = open(tunname, O_RDWR)) != -1) {
             break;
         }
     }
-    if(fd < 0)
+    if (fd < 0)
         return -1;
     strncpy(tun_device, basename(tunname), TUN_DEV_NAME_LENGTH);
 
@@ -210,7 +212,7 @@ int get_ifflags(char *devname, short *flags) {
         return -1;
     }
     err = ioctl(fd, SIOCGIFFLAGS, (void *) &ifr);
-    if( err < 0 ) {
+    if (err < 0) {
          close(fd);
          return err;
     }
@@ -235,7 +237,7 @@ int set_ifflags(char *devname, short flags) {
         return -1;
     }
     err = ioctl(fd, SIOCSIFFLAGS, (void *) &ifr);
-    if( err < 0 ) {
+    if (err < 0) {
          close(fd);
          return err;
     }
@@ -245,30 +247,34 @@ int set_ifflags(char *devname, short flags) {
 }
 
 void usage(char *progname) {
-    fprintf(stderr, "Usage: %s [-v] -l address [-p port]\n\n", progname);
-    fprintf(stderr, "-v\t\t: Be verbose\n");
-    fprintf(stderr, "-l address\t: the IP address to listen on\n");
-    fprintf(stderr, "-p port\t\t: the port to listen on [default: 37008]\n");
+    fprintf(stderr, "Usage: %s [-d] [-h] [-v] [-p port] -l address\n\n", progname);
+    fprintf(stderr, "-d\t\t: Daemonize\n");
     fprintf(stderr, "-h\t\t: Print this help\n");
+    fprintf(stderr, "-l address\t: The IP address to listen on\n");
+    fprintf(stderr, "-p port\t\t: The port to listen on [default: 37008]\n");
+    fprintf(stderr, "-v\t\t: Be verbose\n");
 }
 
 int main(int argc, char *argv[]) {
-    int opt, verbose = 0, on = 1, run = 1;
+    int opt, verbose = 0, on = 1, run = 1, daemonize = 0;
     short ifflags;
     char *listen_addr = NULL, *listen_port = "37008";
 
     struct addrinfo *ai = NULL;
 
-    while ((opt = getopt(argc, argv, "vl:p:h")) != -1) {
+    while ((opt = getopt(argc, argv, "dhl:p:v")) != -1) {
         switch (opt) {
-        case 'v':
-            verbose = 1;
+        case 'd':
+            daemonize = 1;
             break;
         case 'l':
             listen_addr = optarg;
             break;
         case 'p':
             listen_port = optarg;
+            break;
+        case 'v':
+            verbose = 1;
             break;
         case 'h':
         default:
@@ -288,6 +294,12 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    if (daemonize) {
+        if (daemon(0, 0) < 0) {
+            fprintf(stderr, "Can't daemonize: %s\n", strerror(errno));
+            return -1;
+        }
+    }
     signal(SIGINT, sigint);
     
     sock_fd = socket(ai->ai_family, SOCK_DGRAM, 0);
@@ -345,7 +357,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Couldn't parse TZSP package\n");
             continue;
         }
-        if (pkg.datalen > 0) {
+        if (pkg.datalen > 0 && pkg.hdr->enc == TZSP_ENC_ETH) {
             write(tun_fd, pkg.data, pkg.datalen);
         }
     }
