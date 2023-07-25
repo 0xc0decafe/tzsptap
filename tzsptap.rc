@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# PROVIDE: tzsptap
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name=tzsptap
+rcvar=tzsptap_enable
+command=/usr/local/sbin/${name}
+
+load_rc_config $name
+: ${tzsptap_enable:="NO"}
+: ${tzsptap_listen:="0.0.0.0"}
+
+command_args="-d -l $tzsptap_listen"
+
+run_rc_command "$1"
